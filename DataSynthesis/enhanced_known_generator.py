@@ -101,8 +101,8 @@ class EnhancedKnownGenerator:
             'South Korea': '+82 10 {} {}',
             'China': '+86 138 {} {}',
             'India': '+91 98{} {} {}',
-            'Singapore': '+65 9{} {} {}',
-            'Thailand': '+66 8{} {} {}',
+            'Singapore': '+65 9{} {}',
+            'Thailand': '+66 8{} {}',
             'Malaysia': '+60 12 {} {}'
         }
         
@@ -119,9 +119,14 @@ class EnhancedKnownGenerator:
                 f"{random.randint(1000, 9999):04d}",
                 f"{random.randint(1000, 9999):04d}"
             )
-        elif country in ['China', 'Thailand', 'Malaysia']:
+        elif country == 'China':
             return pattern.format(
                 f"{random.randint(1000, 9999):04d}",
+                f"{random.randint(1000, 9999):04d}"
+            )
+        elif country in ['Thailand', 'Malaysia']:
+            return pattern.format(
+                f"{random.randint(10, 99):02d}",
                 f"{random.randint(1000, 9999):04d}"
             )
         elif country == 'India':
@@ -401,7 +406,7 @@ class EnhancedDatabricksUploader:
     def __init__(self):
         load_dotenv()
         self.server_hostname = "e2-demo-field-eng.cloud.databricks.com"
-        self.http_path = "/sql/1.0/warehouses/ea93d9df50e07dc6"
+        self.http_path = "/sql/1.0/warehouses/862f1d757f0424f7"
         self.access_token = os.getenv("TOKEN")
         
     def upload_enhanced_data(self, df, table_name="enhanced_known_360"):
@@ -531,7 +536,7 @@ def main():
     """Generate and upload enhanced known customer dataset."""
     
     # Generate enhanced known customer dataset
-    generator = EnhancedKnownGenerator(num_records=10000)
+    generator = EnhancedKnownGenerator(num_records=90000)
     df = generator.generate_enhanced_dataset()
     
     # Save backup
