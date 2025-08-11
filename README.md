@@ -159,4 +159,4 @@ For questions or contributions, please reach out to the Field Engineering team.
 
 ## License
 
-Internal use only - Databricks Field Engineering
+© 2025 Databricks Field Engineering. All rights reserved.
