@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+../.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Data files (large CSVs)
+DataSynthesis/*.csv
+*.csv.gz
+*.parquet
+
+# Logs
+*.log
+logs/
+
+# Claude related files
+.claude/
+.claude_state/
+claude_hooks/
+CLAUDE.md
+claude_*.py
+*.claude*
+
+# JDBC drivers (binary files)
+jdbc_drivers/*.jar
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Credentials
+credentials/
+secrets/
+*.key
+*.pem
