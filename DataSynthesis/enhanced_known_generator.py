@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Enhanced Anonymous Customer Data Generator
-Generates comprehensive anonymous customer data with advanced tracking columns.
+Enhanced Known Customer Data Generator
+Generates comprehensive known customer data with advanced tracking columns and personal identifiers.
 """
 
 import pandas as pd
@@ -17,13 +17,13 @@ from databricks import sql
 
 fake = Faker(['en_AU', 'ja_JP', 'ko_KR', 'zh_CN', 'en_IN'])
 
-class EnhancedAnonymousGenerator:
-    """Generates enhanced anonymous customer data with realistic patterns."""
+class EnhancedKnownGenerator:
+    """Generates enhanced known customer data with realistic patterns and personal identifiers."""
     
-    def __init__(self, num_records=10000):
+    def __init__(self, num_records=90000):
         self.num_records = num_records
         
-        # APJ-focused countries
+        # APJ-focused countries (same as anonymous version)
         self.apj_countries = {
             'Australia': {'weight': 15, 'cities': ['Sydney', 'Melbourne', 'Brisbane', 'Perth'], 'states': ['NSW', 'VIC', 'QLD', 'WA'], 'timezone': 'AEDT'},
             'Japan': {'weight': 20, 'cities': ['Tokyo', 'Osaka', 'Yokohama', 'Nagoya'], 'states': ['Tokyo', 'Osaka', 'Kanagawa', 'Aichi'], 'timezone': 'JST'},
@@ -35,19 +35,106 @@ class EnhancedAnonymousGenerator:
             'Malaysia': {'weight': 2, 'cities': ['Kuala Lumpur', 'Penang'], 'states': ['Selangor', 'Penang'], 'timezone': 'MYT'}
         }
         
-        # Device and browser data
+        # Device and browser data (same as anonymous)
         self.devices = {
             'mobile': {'browsers': ['Chrome Mobile', 'Safari Mobile', 'Samsung Internet', 'Firefox Mobile'], 'os': ['Android', 'iOS']},
             'desktop': {'browsers': ['Chrome', 'Safari', 'Firefox', 'Edge'], 'os': ['Windows', 'macOS', 'Linux']},
             'tablet': {'browsers': ['Chrome Mobile', 'Safari Mobile'], 'os': ['Android', 'iOS']}
         }
         
-        # Traffic sources
+        # Traffic sources (same as anonymous)
         self.utm_sources = ['google', 'facebook', 'instagram', 'linkedin', 'twitter', 'tiktok', 'youtube', 'bing', 'direct', 'organic']
         self.utm_mediums = ['cpc', 'organic', 'social', 'email', 'referral', 'direct', 'display', 'video']
         
-        # Engagement segments
-        self.segments = ['new-visitor', 'returning', 'high-engagement', 'low-engagement', 'at-risk', 'loyal']
+        # Engagement segments (enhanced for known customers)
+        self.segments = ['new-customer', 'returning', 'high-value', 'medium-value', 'low-value', 'vip', 'at-risk', 'loyal', 're-engaged']
+        
+        # Email domains by country
+        self.email_domains = {
+            'Australia': ['gmail.com', 'yahoo.com.au', 'outlook.com.au', 'bigpond.com', 'optusnet.com.au'],
+            'Japan': ['gmail.com', 'yahoo.co.jp', 'outlook.jp', 'nifty.com', 'biglobe.ne.jp'],
+            'South Korea': ['gmail.com', 'naver.com', 'daum.net', 'hanmail.net', 'korea.com'],
+            'China': ['gmail.com', 'qq.com', '163.com', '126.com', 'sina.com'],
+            'India': ['gmail.com', 'yahoo.in', 'rediffmail.com', 'outlook.in', 'hotmail.com'],
+            'Singapore': ['gmail.com', 'yahoo.com.sg', 'outlook.sg', 'singnet.com.sg'],
+            'Thailand': ['gmail.com', 'yahoo.co.th', 'hotmail.com', 'outlook.co.th'],
+            'Malaysia': ['gmail.com', 'yahoo.com.my', 'hotmail.my', 'outlook.my']
+        }
+        
+    def _generate_customer_id(self):
+        """Generate realistic customer ID."""
+        # Format: CUST_YYYYMMDD_XXXXXX (date + random)
+        date_part = fake.date_between(start_date='-2y', end_date='now').strftime('%Y%m%d')
+        random_part = f"{random.randint(100000, 999999):06d}"
+        return f"CUST_{date_part}_{random_part}"
+        
+    def _generate_email(self, country):
+        """Generate realistic email address based on country."""
+        domains = self.email_domains.get(country, ['gmail.com', 'yahoo.com', 'outlook.com'])
+        domain = random.choice(domains)
+        
+        # Generate realistic username
+        first_name = fake.first_name().lower()
+        last_name = fake.last_name().lower()
+        
+        # Various email patterns
+        patterns = [
+            f"{first_name}.{last_name}",
+            f"{first_name}{last_name}",
+            f"{first_name}.{last_name}{random.randint(1, 99)}",
+            f"{first_name[0]}.{last_name}",
+            f"{first_name}.{last_name[0]}",
+            f"{first_name}{random.randint(1980, 2005)}"
+        ]
+        
+        username = random.choice(patterns)
+        # Remove any non-ascii characters for email compatibility
+        username = ''.join(c for c in username if ord(c) < 128)
+        
+        return f"{username}@{domain}"
+        
+    def _generate_phone_number(self, country):
+        """Generate realistic phone number based on country."""
+        phone_patterns = {
+            'Australia': '+61 4{} {} {}',
+            'Japan': '+81 90 {} {}',
+            'South Korea': '+82 10 {} {}',
+            'China': '+86 138 {} {}',
+            'India': '+91 98{} {} {}',
+            'Singapore': '+65 9{} {} {}',
+            'Thailand': '+66 8{} {} {}',
+            'Malaysia': '+60 12 {} {}'
+        }
+        
+        pattern = phone_patterns.get(country, '+1 555 {} {}')
+        
+        if country == 'Australia':
+            return pattern.format(
+                f"{random.randint(10, 99):02d}",
+                f"{random.randint(100, 999):03d}",
+                f"{random.randint(100, 999):03d}"
+            )
+        elif country in ['Japan', 'South Korea', 'Singapore']:
+            return pattern.format(
+                f"{random.randint(1000, 9999):04d}",
+                f"{random.randint(1000, 9999):04d}"
+            )
+        elif country in ['China', 'Thailand', 'Malaysia']:
+            return pattern.format(
+                f"{random.randint(1000, 9999):04d}",
+                f"{random.randint(1000, 9999):04d}"
+            )
+        elif country == 'India':
+            return pattern.format(
+                f"{random.randint(10, 99):02d}",
+                f"{random.randint(100, 999):03d}",
+                f"{random.randint(100, 999):03d}"
+            )
+        else:
+            return pattern.format(
+                f"{random.randint(100, 999):03d}",
+                f"{random.randint(1000, 9999):04d}"
+            )
         
     def _generate_geo_data(self):
         """Generate geographic data with timezone."""
@@ -85,50 +172,50 @@ class EnhancedAnonymousGenerator:
         return device_type, browser, os, screen_resolution, viewport_size
         
     def _generate_session_data(self):
-        """Generate realistic session behavior data."""
-        # Session duration (seconds) - realistic patterns
-        if random.random() < 0.3:  # 30% bounce
-            duration = random.randint(5, 30)
+        """Generate realistic session behavior data (known customers tend to engage more)."""
+        # Known customers have better engagement patterns
+        if random.random() < 0.15:  # 15% bounce (lower than anonymous)
+            duration = random.randint(15, 60)
             page_views = 1
             is_bounce = True
         else:
-            duration = np.random.gamma(2, 120)  # Average ~4 minutes
-            duration = max(30, min(duration, 3600))  # 30sec to 1hr
-            page_views = max(2, int(np.random.poisson(3.5)))
+            duration = np.random.gamma(3, 150)  # Slightly longer sessions
+            duration = max(45, min(duration, 4800))  # 45sec to 1.3hr
+            page_views = max(2, int(np.random.poisson(4.2)))  # More page views
             is_bounce = False
             
         # Calculate derived metrics
         avg_time_per_page = duration / page_views if page_views > 0 else duration
-        scroll_depth = random.randint(25, 100) if not is_bounce else random.randint(10, 40)
-        click_count = random.randint(0, 2) if is_bounce else random.randint(2, 15)
+        scroll_depth = random.randint(35, 100) if not is_bounce else random.randint(15, 50)
+        click_count = random.randint(1, 3) if is_bounce else random.randint(3, 20)
         
         return duration, page_views, is_bounce, avg_time_per_page, scroll_depth, click_count
         
     def _generate_utm_data(self):
         """Generate marketing attribution data."""
-        # 40% organic/direct traffic, 60% paid/referred
-        if random.random() < 0.4:
+        # Known customers more likely to come from email/referrals
+        if random.random() < 0.3:
             utm_source = random.choice(['direct', 'organic'])
             utm_medium = 'organic' if utm_source == 'organic' else 'direct'
             utm_campaign = None
         else:
             utm_source = random.choice(self.utm_sources)
             utm_medium = random.choice(self.utm_mediums)
-            campaigns = ['summer_sale', 'new_product_launch', 'retargeting', 'brand_awareness', 'holiday_promo']
+            campaigns = ['customer_retention', 'loyalty_program', 'new_product_launch', 'personalized_offer', 'winback_campaign']
             utm_campaign = random.choice(campaigns)
             
         return utm_source, utm_medium, utm_campaign
         
     def _generate_engagement_scores(self):
-        """Generate realistic engagement and propensity scores."""
-        # Engagement score (0-100)
-        engagement_score = max(0, min(100, int(np.random.normal(45, 20))))
+        """Generate realistic engagement and propensity scores (higher for known customers)."""
+        # Known customers have higher engagement
+        engagement_score = max(0, min(100, int(np.random.normal(65, 18))))
         
-        # Churn score (0-1, higher = more likely to churn)
-        churn_score = np.random.beta(2, 5)  # Skewed towards lower churn
+        # Lower churn risk for known customers
+        churn_score = np.random.beta(1.5, 6)  # Even more skewed towards lower churn
         
-        # Propensity to convert (0-1)
-        conversion_propensity = np.random.beta(3, 7)  # Most users low propensity
+        # Higher conversion propensity
+        conversion_propensity = np.random.beta(4, 6)  # Better conversion rates
         
         return engagement_score, round(churn_score, 3), round(conversion_propensity, 3)
         
@@ -136,27 +223,27 @@ class EnhancedAnonymousGenerator:
         """Generate realistic event sequence data."""
         events = []
         
-        # Common page types
-        page_types = ['homepage', 'product', 'category', 'search', 'checkout', 'account', 'help', 'about']
+        # Known customers visit more diverse pages
+        page_types = ['homepage', 'product', 'category', 'search', 'checkout', 'account', 'help', 'about', 'profile', 'orders', 'wishlist']
         
         for i in range(page_views):
             if i == 0:
-                page = 'homepage'
+                page = random.choice(['homepage', 'account', 'product'])  # Multiple entry points
             else:
                 page = random.choice(page_types)
                 
             event = {
                 'page': page,
                 'timestamp': fake.date_time_between(start_date='-1h', end_date='now').isoformat(),
-                'duration_seconds': random.randint(10, 300)
+                'duration_seconds': random.randint(15, 450)
             }
             events.append(event)
             
         return json.dumps(events)
         
     def generate_enhanced_dataset(self):
-        """Generate the complete enhanced anonymous dataset."""
-        print(f"🏗️  Generating {self.num_records} enhanced anonymous records...")
+        """Generate the complete enhanced known customer dataset."""
+        print(f"🏗️  Generating {self.num_records} enhanced known customer records...")
         
         data = []
         
@@ -164,6 +251,11 @@ class EnhancedAnonymousGenerator:
             # Basic geo and device data
             country, state, city, timezone = self._generate_geo_data()
             device_type, browser, os, screen_res, viewport = self._generate_device_data()
+            
+            # Customer identification
+            customer_id = self._generate_customer_id()
+            email = self._generate_email(country)
+            phone_number = self._generate_phone_number(country)
             
             # Session behavior
             duration, page_views, is_bounce, avg_time_per_page, scroll_depth, click_count = self._generate_session_data()
@@ -175,11 +267,11 @@ class EnhancedAnonymousGenerator:
             engagement_score, churn_score, conversion_propensity = self._generate_engagement_scores()
             
             # Event data
-            event_count = max(1, page_views + random.randint(0, 5))
-            last_event = fake.date_time_between(start_date='-60d', end_date='now')
+            event_count = max(2, page_views + random.randint(1, 8))  # Known customers have more events
+            last_event = fake.date_time_between(start_date='-30d', end_date='now')  # More recent activity
             event_sequence = self._generate_event_sequence(page_views, click_count)
             
-            # IP address
+            # IP address (same logic as anonymous)
             ip_ranges = {
                 'Australia': ['1.0.0', '14.0.0'],
                 'Japan': ['126.0.0', '133.0.0'],
@@ -193,9 +285,11 @@ class EnhancedAnonymousGenerator:
             base_ip = random.choice(ip_ranges.get(country, ['192.168.0']))
             ip_address = f"{base_ip}.{random.randint(1, 254)}"
             
-            # Segment assignment based on behavior
+            # Enhanced segment assignment for known customers
             if is_bounce and engagement_score < 30:
                 segment = 'low-engagement'
+            if engagement_score > 85 and conversion_propensity > 0.7:
+                segment = 'vip'
             elif engagement_score > 70:
                 segment = 'high-engagement'
             elif churn_score > 0.7:
@@ -212,12 +306,12 @@ class EnhancedAnonymousGenerator:
                 segment = 'returning'
             
             record = {
-                # Original columns
-                'customer_id': None,
-                'known_flag': False,
-                'anon_id': f"ANON_{str(uuid.uuid4()).replace('-', '')[:12].upper()}",
-                'email': None,
-                'phone_number': None,
+                # Core identification columns (KEY DIFFERENCE: These are populated)
+                'customer_id': customer_id,
+                'known_flag': True,
+                'anon_id': f"KNOWN_{str(uuid.uuid4()).replace('-', '')[:12].upper()}",
+                'email': email,
+                'phone_number': phone_number,
                 'geo_country': country,
                 'geo_state': state,
                 'geo_city': city,
@@ -227,7 +321,7 @@ class EnhancedAnonymousGenerator:
                 'last_event_date': last_event,
                 'segment': segment,
                 
-                # Enhanced columns for anonymous tracking
+                # Enhanced columns for known customer tracking
                 'session_id': f"SESS_{str(uuid.uuid4()).replace('-', '')[:16].upper()}",
                 'session_duration_seconds': int(duration),
                 'page_views': page_views,
@@ -255,11 +349,11 @@ class EnhancedAnonymousGenerator:
                 
                 # Event Data
                 'event_sequence_json': event_sequence,
-                'landing_page': 'homepage' if random.random() < 0.4 else random.choice(['product', 'category', 'search']),
+                'landing_page': random.choice(['homepage', 'product', 'account', 'category']),
                 'referrer_domain': utm_source if utm_source not in ['direct', 'organic'] else None,
                 
                 # Timing
-                'local_visit_hour': random.randint(6, 23),  # Local business hours bias
+                'local_visit_hour': random.randint(7, 22),  # Known customers during business hours
                 'day_of_week': random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']),
                 'is_weekend': random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']) in ['Saturday', 'Sunday']
             }
@@ -267,18 +361,18 @@ class EnhancedAnonymousGenerator:
             data.append(record)
             
             if (i + 1) % 1000 == 0:
-                print(f"   Generated {i + 1:,} records...")
+                print(f"   Generated {i + 1:,} known customer records...")
         
         df = pd.DataFrame(data)
         
-        print("✅ Enhanced dataset generation complete!")
+        print("✅ Enhanced known customer dataset generation complete!")
         self._print_enhanced_summary(df)
         
         return df
         
     def _print_enhanced_summary(self, df):
         """Print enhanced dataset summary."""
-        print(f"\n📊 Enhanced Dataset Summary:")
+        print(f"\n📊 Enhanced Known Customer Dataset Summary:")
         print(f"   Total records: {len(df):,}")
         print(f"   Average session duration: {df['session_duration_seconds'].mean():.0f} seconds")
         print(f"   Average page views: {df['page_views'].mean():.1f}")
@@ -296,10 +390,13 @@ class EnhancedAnonymousGenerator:
         print(f"\n🚀 Traffic Sources:")
         for source, count in df['utm_source'].value_counts().head().items():
             print(f"   {source}: {count:,}")
-
+            
+        print(f"\n👑 Customer Segments:")
+        for segment, count in df['segment'].value_counts().head().items():
+            print(f"   {segment}: {count:,}")
 
 class EnhancedDatabricksUploader:
-    """Upload enhanced anonymous data to Databricks."""
+    """Upload enhanced known customer data to Databricks."""
     
     def __init__(self):
         load_dotenv()
@@ -307,8 +404,8 @@ class EnhancedDatabricksUploader:
         self.http_path = "/sql/1.0/warehouses/ea93d9df50e07dc6"
         self.access_token = os.getenv("TOKEN")
         
-    def upload_enhanced_data(self, df, table_name="enhanced_anonymous_360"):
-        """Upload enhanced dataset to Databricks."""
+    def upload_enhanced_data(self, df, table_name="enhanced_known_360"):
+        """Upload enhanced known customer dataset to Databricks."""
         
         if not self.access_token:
             print("❌ TOKEN not found")
@@ -327,11 +424,11 @@ class EnhancedDatabricksUploader:
             schema_name = "apscat.di4marketing"
             full_table_name = f"{schema_name}.{table_name}"
             
-            print(f"🏗️  Creating enhanced table {full_table_name}...")
+            print(f"🏗️  Creating enhanced known customer table {full_table_name}...")
             
             cursor.execute(f"DROP TABLE IF EXISTS {full_table_name}")
             
-            # Enhanced table schema
+            # Enhanced table schema (same structure as anonymous but with populated identity fields)
             create_sql = f"""
             CREATE TABLE {full_table_name} (
                 customer_id STRING,
@@ -381,13 +478,13 @@ class EnhancedDatabricksUploader:
             """
             
             cursor.execute(create_sql)
-            print("✅ Enhanced table created")
+            print("✅ Enhanced known customer table created")
             
             # Upload in batches
             batch_size = 300
             total_batches = (len(df) + batch_size - 1) // batch_size
             
-            print(f"📤 Uploading {len(df):,} enhanced records in {total_batches} batches...")
+            print(f"📤 Uploading {len(df):,} enhanced known customer records in {total_batches} batches...")
             
             for i, batch_start in enumerate(range(0, len(df), batch_size)):
                 batch_end = min(batch_start + batch_size, len(df))
@@ -423,33 +520,32 @@ class EnhancedDatabricksUploader:
             cursor.close()
             connection.close()
             
-            print(f"🎉 Enhanced upload complete! {count:,} records in {full_table_name}")
+            print(f"🎉 Enhanced known customer upload complete! {count:,} records in {full_table_name}")
             return True
             
         except Exception as e:
-            print(f"❌ Enhanced upload failed: {e}")
+            print(f"❌ Enhanced known customer upload failed: {e}")
             return False
 
-
 def main():
-    """Generate and upload enhanced anonymous dataset."""
+    """Generate and upload enhanced known customer dataset."""
     
-    # Generate enhanced dataset
-    generator = EnhancedAnonymousGenerator(num_records=10000)
+    # Generate enhanced known customer dataset
+    generator = EnhancedKnownGenerator(num_records=10000)
     df = generator.generate_enhanced_dataset()
     
     # Save backup
-    csv_file = "../enhanced_anonymous_customer_data.csv"
+    csv_file = "../enhanced_known_customer_data.csv"
     df.to_csv(csv_file, index=False)
-    print(f"💾 Enhanced data saved to {csv_file}")
+    print(f"💾 Enhanced known customer data saved to {csv_file}")
     
     # Upload to Databricks
     uploader = EnhancedDatabricksUploader()
-    success = uploader.upload_enhanced_data(df, "enhanced_anonymous_360")
+    success = uploader.upload_enhanced_data(df, "enhanced_known_360")
     
     if success:
-        print("🚀 Enhanced anonymous customer data ready in Databricks!")
-        print("   Table: apscat.di4marketing.enhanced_anonymous_360")
+        print("🚀 Enhanced known customer data ready in Databricks!")
+        print("   Table: apscat.di4marketing.enhanced_known_360")
     
     return df
 
