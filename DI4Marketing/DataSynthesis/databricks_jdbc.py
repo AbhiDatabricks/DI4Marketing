@@ -64,7 +64,7 @@ class DatabricksJDBCManager:
             print(f"📥 JDBC driver not found. Download from:")
             print("   https://databricks.com/spark/jdbc-drivers-download")
             print(f"   Save as: {driver_path}")
-            print("   Or run: ./claude_hook record 'download databricks jdbc driver'")
+            print("   Or manually download from: https://databricks.com/spark/jdbc-drivers-download")
             
         return str(driver_path)
         

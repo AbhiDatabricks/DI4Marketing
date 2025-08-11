@@ -36,7 +36,7 @@ DataSynthesis/*.csv
 *.log
 logs/
 
-# Claude related files
+# Claude related files (keep ignored)
 .claude/
 .claude_state/
 claude_hooks/
