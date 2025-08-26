@@ -1,0 +1,843 @@
+{
+  "datasets": [
+    {
+      "name": "c4980b06",
+      "displayName": "enhanced_anonymous_360",
+      "queryLines": [
+        "SELECT *\n",
+        "FROM apscat.di4marketing.enhanced_anonymous_360"
+      ]
+    },
+    {
+      "name": "c4e9c38e",
+      "displayName": "enhanced_known_360",
+      "queryLines": [
+        "SELECT * FROM apscat.di4marketing.enhanced_known_360"
+      ]
+    },
+    {
+      "name": "6561f66e",
+      "displayName": "all_customers",
+      "queryLines": [
+        "SELECT *\n",
+        "FROM apscat.di4marketing.enhanced_anonymous_360\n",
+        "UNION ALL\n",
+        "SELECT *\n",
+        "FROM apscat.di4marketing.enhanced_known_360"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "e01e5631",
+      "displayName": "Cohort comparison",
+      "layout": [
+        {
+          "widget": {
+            "name": "82b3a44e",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "known_flag",
+                      "expression": "`known_flag`"
+                    },
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "count(segment)",
+                      "expression": "COUNT(`segment`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`geo_country` IN (`geo_country`) OR TRUE"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "segment",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  },
+                  "displayName": "segment"
+                },
+                "y": {
+                  "fieldName": "count(segment)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Count of segment"
+                },
+                "color": {
+                  "fieldName": "known_flag",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "legend": {
+                    "hide": false,
+                    "position": "right"
+                  },
+                  "displayName": "known_flag"
+                }
+              },
+              "frame": {
+                "title": "Segment Counts by Customer Cohort",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 12,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "5270d2fb",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "known_flag",
+                      "expression": "`known_flag`"
+                    },
+                    {
+                      "name": "device_type",
+                      "expression": "`device_type`"
+                    },
+                    {
+                      "name": "sum(event_count)",
+                      "expression": "SUM(`event_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "device_type",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "device_type"
+                },
+                "y": {
+                  "fieldName": "sum(event_count)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Event count"
+                },
+                "color": {
+                  "fieldName": "known_flag",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "known_flag"
+                }
+              },
+              "mark": {
+                "colors": [
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 12,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "7ef9bb8d",
+            "queries": [
+              {
+                "name": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_geo_country",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "geo_country",
+                      "expression": "`geo_country`"
+                    },
+                    {
+                      "name": "geo_country_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "geo_country",
+                    "displayName": "geo_country",
+                    "queryName": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_geo_country"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 2,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "7b5a37fd",
+            "queries": [
+              {
+                "name": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_geo_state",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "geo_state",
+                      "expression": "`geo_state`"
+                    },
+                    {
+                      "name": "geo_state_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "geo_state",
+                    "displayName": "geo_state",
+                    "queryName": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_geo_state"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 8,
+            "width": 2,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "0c07369e",
+            "queries": [
+              {
+                "name": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_geo_city",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "geo_city",
+                      "expression": "`geo_city`"
+                    },
+                    {
+                      "name": "geo_city_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "geo_city",
+                    "displayName": "geo_city",
+                    "queryName": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_geo_city"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 8,
+            "width": 2,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "659ec04f",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "avg(conversion_propensity)",
+                      "expression": "AVG(`conversion_propensity`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "segment",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "segment"
+                },
+                "y": {
+                  "fieldName": "avg(conversion_propensity)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Average conversion_propensity"
+                },
+                "color": {
+                  "fieldName": "segment",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "segment"
+                }
+              },
+              "frame": {
+                "title": "Conversion Propensity by Segment",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 18,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "d028c619",
+            "queries": [
+              {
+                "name": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_utm_campaign",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "utm_campaign",
+                      "expression": "`utm_campaign`"
+                    },
+                    {
+                      "name": "utm_campaign_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "utm_campaign",
+                    "displayName": "utm_campaign",
+                    "queryName": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_utm_campaign"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 2,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "7cac33f5",
+            "queries": [
+              {
+                "name": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_utm_medium",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "utm_medium",
+                      "expression": "`utm_medium`"
+                    },
+                    {
+                      "name": "utm_medium_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "utm_medium",
+                    "displayName": "utm_medium",
+                    "queryName": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_utm_medium"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 11,
+            "width": 2,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "b7f9dce7",
+            "queries": [
+              {
+                "name": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_utm_source",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "utm_source",
+                      "expression": "`utm_source`"
+                    },
+                    {
+                      "name": "utm_source_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "utm_source",
+                    "displayName": "utm_source",
+                    "queryName": "dashboards/01f07bc95b1c15c49e007b9127fc85c8/datasets/01f0821b787812f9ae3115a8b2d87324_utm_source"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 11,
+            "width": 2,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "ce112cfa",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## UTM tracking"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "05a6f1fc",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Geography"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "8c61c899",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "known_flag",
+                      "expression": "`known_flag`"
+                    },
+                    {
+                      "name": "device_type",
+                      "expression": "`device_type`"
+                    },
+                    {
+                      "name": "avg(session_duration_seconds)",
+                      "expression": "AVG(`session_duration_seconds`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "device_type",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  },
+                  "displayName": "device_type"
+                },
+                "y": {
+                  "fieldName": "avg(session_duration_seconds)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Average session_duration_seconds"
+                },
+                "color": {
+                  "fieldName": "known_flag",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "known_flag"
+                }
+              },
+              "frame": {
+                "title": "Average Session Duration by Device Type",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 18,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "44d6f38c",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "avg(engagement_score)",
+                      "expression": "AVG(`engagement_score`)"
+                    },
+                    {
+                      "name": "geo_country",
+                      "expression": "`geo_country`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "choropleth-map",
+              "encodings": {
+                "extra": [
+                  {
+                    "fieldName": "avg(engagement_score)",
+                    "displayName": "Average engagement_score"
+                  }
+                ],
+                "region": {
+                  "regionType": "mapbox-v4-admin",
+                  "admin0": {
+                    "fieldName": "geo_country",
+                    "type": "field",
+                    "geographicRole": "admin0-name",
+                    "displayName": "geo_country"
+                  }
+                }
+              },
+              "frame": {
+                "title": "Engagement Score by Region",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "4811b8f3",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "known_flag",
+                      "expression": "`known_flag`"
+                    },
+                    {
+                      "name": "day_of_week",
+                      "expression": "`day_of_week`"
+                    },
+                    {
+                      "name": "avg(session_duration_seconds)",
+                      "expression": "AVG(`session_duration_seconds`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "day_of_week",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  },
+                  "displayName": "day_of_week"
+                },
+                "y": {
+                  "fieldName": "avg(session_duration_seconds)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Average session_duration_seconds"
+                },
+                "color": {
+                  "fieldName": "known_flag",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "known_flag"
+                }
+              },
+              "frame": {
+                "title": "Session Duration by Day of Week",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 24,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "a8774b61",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6561f66e",
+                  "fields": [
+                    {
+                      "name": "landing_page",
+                      "expression": "`landing_page`"
+                    },
+                    {
+                      "name": "sum(event_count)",
+                      "expression": "SUM(`event_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "landing_page",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  },
+                  "displayName": "landing_page"
+                },
+                "y": {
+                  "fieldName": "sum(event_count)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Sum of event_count"
+                }
+              },
+              "frame": {
+                "title": "Popularity of Landing Page",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 24,
+            "width": 3,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    }
+  }
+}

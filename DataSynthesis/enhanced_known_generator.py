@@ -229,7 +229,7 @@ class EnhancedKnownGenerator:
         events = []
         
         # Known customers visit more diverse pages
-        page_types = ['homepage', 'product', 'category', 'search', 'checkout', 'account', 'help', 'about', 'profile', 'orders', 'wishlist']
+        page_types = ['homepage', 'product', 'category', 'search','cart', 'checkout', 'account', 'help', 'about', 'profile', 'orders', 'wishlist']
         
         for i in range(page_views):
             if i == 0:

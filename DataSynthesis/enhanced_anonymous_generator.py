@@ -137,8 +137,7 @@ class EnhancedAnonymousGenerator:
         events = []
         
         # Common page types
-        page_types = ['homepage', 'product', 'category', 'search', 'checkout', 'account', 'help', 'about']
-        
+        page_types = ['homepage', 'product', 'category', 'search', 'cart', 'checkout', 'account', 'help', 'about']
         for i in range(page_views):
             if i == 0:
                 page = 'homepage'
