@@ -23,17 +23,71 @@ class EnhancedKnownGenerator:
     def __init__(self, num_records=90000):
         self.num_records = num_records
         
-        # APJ-focused countries (same as anonymous version)
+        # APJ-focused countries with enhanced locality data
         self.apj_countries = {
-            'Australia': {'weight': 15, 'cities': ['Sydney', 'Melbourne', 'Brisbane', 'Perth'], 'states': ['NSW', 'VIC', 'QLD', 'WA'], 'timezone': 'AEDT'},
-            'Japan': {'weight': 20, 'cities': ['Tokyo', 'Osaka', 'Yokohama', 'Nagoya'], 'states': ['Tokyo', 'Osaka', 'Kanagawa', 'Aichi'], 'timezone': 'JST'},
-            'South Korea': {'weight': 12, 'cities': ['Seoul', 'Busan', 'Incheon', 'Daegu'], 'states': ['Seoul', 'Busan', 'Incheon', 'Daegu'], 'timezone': 'KST'},
-            'China': {'weight': 25, 'cities': ['Shanghai', 'Beijing', 'Guangzhou', 'Shenzhen'], 'states': ['Shanghai', 'Beijing', 'Guangdong', 'Guangdong'], 'timezone': 'CST'},
-            'India': {'weight': 18, 'cities': ['Mumbai', 'Delhi', 'Bangalore', 'Chennai'], 'states': ['Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu'], 'timezone': 'IST'},
-            'Singapore': {'weight': 5, 'cities': ['Singapore'], 'states': ['Singapore'], 'timezone': 'SGT'},
-            'Thailand': {'weight': 3, 'cities': ['Bangkok', 'Chiang Mai'], 'states': ['Bangkok', 'Chiang Mai'], 'timezone': 'ICT'},
-            'Malaysia': {'weight': 2, 'cities': ['Kuala Lumpur', 'Penang'], 'states': ['Selangor', 'Penang'], 'timezone': 'MYT'}
+            'Australia': {
+                'weight': 15, 
+                'cities': ['Sydney', 'Melbourne', 'Brisbane', 'Perth'], 
+                'states': ['NSW', 'VIC', 'QLD', 'WA'], 
+                'timezone': 'AEDT',
+                'city_types': {'Sydney': 'metro', 'Melbourne': 'metro', 'Brisbane': 'metro', 'Perth': 'metro'}
+            },
+            'Japan': {
+                'weight': 20, 
+                'cities': ['Tokyo', 'Osaka', 'Yokohama', 'Nagoya'], 
+                'states': ['Tokyo', 'Osaka', 'Kanagawa', 'Aichi'], 
+                'timezone': 'JST',
+                'city_types': {'Tokyo': 'metro', 'Osaka': 'metro', 'Yokohama': 'metro', 'Nagoya': 'metro'}
+            },
+            'South Korea': {
+                'weight': 12, 
+                'cities': ['Seoul', 'Busan', 'Incheon', 'Daegu'], 
+                'states': ['Seoul', 'Busan', 'Incheon', 'Daegu'], 
+                'timezone': 'KST',
+                'city_types': {'Seoul': 'metro', 'Busan': 'metro', 'Incheon': 'metro', 'Daegu': 'metro'}
+            },
+            'China': {
+                'weight': 25, 
+                'cities': ['Shanghai', 'Beijing', 'Guangzhou', 'Shenzhen'], 
+                'states': ['Shanghai', 'Beijing', 'Guangdong', 'Guangdong'], 
+                'timezone': 'CST',
+                'city_types': {'Shanghai': 'metro', 'Beijing': 'metro', 'Guangzhou': 'metro', 'Shenzhen': 'metro'}
+            },
+            'India': {
+                'weight': 18, 
+                'cities': ['Mumbai', 'Delhi', 'Bangalore', 'Chennai'], 
+                'states': ['Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu'], 
+                'timezone': 'IST',
+                'city_types': {'Mumbai': 'metro', 'Delhi': 'metro', 'Bangalore': 'metro', 'Chennai': 'metro'}
+            },
+            'Singapore': {
+                'weight': 5, 
+                'cities': ['Singapore'], 
+                'states': ['Singapore'], 
+                'timezone': 'SGT',
+                'city_types': {'Singapore': 'metro'}
+            },
+            'Thailand': {
+                'weight': 3, 
+                'cities': ['Bangkok', 'Chiang Mai'], 
+                'states': ['Bangkok', 'Chiang Mai'], 
+                'timezone': 'ICT',
+                'city_types': {'Bangkok': 'metro', 'Chiang Mai': 'metro'}
+            },
+            'Malaysia': {
+                'weight': 2, 
+                'cities': ['Kuala Lumpur', 'Penang'], 
+                'states': ['Selangor', 'Penang'], 
+                'timezone': 'MYT',
+                'city_types': {'Kuala Lumpur': 'metro', 'Penang': 'metro'}
+            }
         }
+        
+        # Geographic locality types with behavioral implications
+        self.locality_types = ['metro', 'suburban', 'regional']
+        
+        # Locality type distributions (can be overridden by city-specific mapping)
+        self.locality_weights = [0.55, 0.30, 0.15]  # Metro-dominant APJ region
         
         # Device and browser data (same as anonymous)
         self.devices = {
@@ -70,6 +124,89 @@ class EnhancedKnownGenerator:
             (65, 99, '65+')
         ]
         self.age_band_weights = [0.28, 0.32, 0.18, 0.12, 0.07, 0.03]  # Skewed toward 18-34
+        
+        # Income level definitions with age-based probability matrices
+        self.income_levels = ['budget_conscious', 'mid_tier', 'luxury']
+        
+        # Income level probabilities by age band (rows: age bands, cols: income levels)
+        # Younger people tend to be more budget conscious, older people have higher luxury rates
+        self.income_probabilities = {
+            '18-24': [0.65, 0.30, 0.05],  # Students and entry-level workers
+            '25-34': [0.45, 0.45, 0.10],  # Young professionals
+            '35-44': [0.30, 0.50, 0.20],  # Peak earning years begin
+            '45-54': [0.25, 0.45, 0.30],  # Peak earning years
+            '55-64': [0.30, 0.40, 0.30],  # High earners but some downsizing
+            '65+': [0.40, 0.35, 0.25]     # Fixed income but accumulated wealth
+        }
+        
+        # Life stage definitions with age-based probability matrices
+        self.life_stages = ['student', 'young_professional', 'parent', 'empty_nester', 'retiree']
+        
+        # Life stage probabilities by age band
+        self.life_stage_probabilities = {
+            '18-24': [0.60, 0.35, 0.05, 0.00, 0.00],  # Mostly students and young professionals
+            '25-34': [0.10, 0.55, 0.35, 0.00, 0.00],  # Career focus and starting families
+            '35-44': [0.02, 0.25, 0.70, 0.03, 0.00],  # Peak parenting years
+            '45-54': [0.00, 0.15, 0.60, 0.25, 0.00],  # Still parents but some empty nesters
+            '55-64': [0.00, 0.10, 0.20, 0.60, 0.10],  # Empty nesters and pre-retirees
+            '65+': [0.00, 0.05, 0.05, 0.20, 0.70]     # Mostly retirees
+        }
+        
+        # Purchase behavior categories
+        self.purchase_frequencies = ['low_frequency', 'medium_frequency', 'high_frequency']
+        self.purchase_values = ['low_value', 'medium_value', 'high_value']
+        self.brand_loyalties = ['brand_switcher', 'moderately_loyal', 'brand_loyal']
+        self.shopping_channels = ['online_only', 'offline_only', 'omnichannel']
+        
+        # Purchase frequency by income level (purchases per month)
+        self.purchase_freq_by_income = {
+            'budget_conscious': [0.70, 0.25, 0.05],  # Mostly low frequency
+            'mid_tier': [0.30, 0.55, 0.15],          # Balanced toward medium
+            'luxury': [0.15, 0.35, 0.50]             # Higher frequency for luxury
+        }
+        
+        # Purchase value by age band and income level
+        self.purchase_value_matrix = {
+            ('18-24', 'budget_conscious'): [0.85, 0.15, 0.00],
+            ('18-24', 'mid_tier'): [0.60, 0.35, 0.05],
+            ('18-24', 'luxury'): [0.30, 0.50, 0.20],
+            ('25-34', 'budget_conscious'): [0.75, 0.20, 0.05],
+            ('25-34', 'mid_tier'): [0.45, 0.45, 0.10],
+            ('25-34', 'luxury'): [0.20, 0.50, 0.30],
+            ('35-44', 'budget_conscious'): [0.70, 0.25, 0.05],
+            ('35-44', 'mid_tier'): [0.35, 0.50, 0.15],
+            ('35-44', 'luxury'): [0.15, 0.45, 0.40],
+            ('45-54', 'budget_conscious'): [0.65, 0.30, 0.05],
+            ('45-54', 'mid_tier'): [0.30, 0.50, 0.20],
+            ('45-54', 'luxury'): [0.10, 0.40, 0.50],
+            ('55-64', 'budget_conscious'): [0.70, 0.25, 0.05],
+            ('55-64', 'mid_tier'): [0.35, 0.45, 0.20],
+            ('55-64', 'luxury'): [0.15, 0.35, 0.50],
+            ('65+', 'budget_conscious'): [0.75, 0.20, 0.05],
+            ('65+', 'mid_tier'): [0.40, 0.45, 0.15],
+            ('65+', 'luxury'): [0.20, 0.40, 0.40]
+        }
+        
+        # Brand loyalty by life stage
+        self.brand_loyalty_by_life_stage = {
+            'student': [0.60, 0.30, 0.10],           # Price-sensitive, brand switching
+            'young_professional': [0.45, 0.40, 0.15], # Exploring brands
+            'parent': [0.25, 0.45, 0.30],            # More loyal for family brands
+            'empty_nester': [0.30, 0.40, 0.30],      # Established preferences
+            'retiree': [0.20, 0.35, 0.45]            # Very loyal to trusted brands
+        }
+        
+        # Shopping channel preferences by locality and age
+        self.channel_by_locality = {
+            'metro': [0.45, 0.15, 0.40],      # High omnichannel adoption
+            'suburban': [0.35, 0.25, 0.40],   # Balanced across channels
+            'regional': [0.25, 0.45, 0.30]    # More offline preference
+        }
+        
+        # Behavioral traits based on existing features
+        self.engagement_behaviors = ['passive', 'browser', 'researcher', 'active_buyer']
+        self.price_sensitivities = ['price_conscious', 'value_seeker', 'premium_buyer']
+        self.product_interests = ['electronics', 'fashion', 'home_garden', 'health_beauty', 'books_media', 'sports_outdoors']
 
     def _generate_customer_id(self):
         """Generate realistic customer ID."""
@@ -146,7 +283,7 @@ class EnhancedKnownGenerator:
             )
         
     def _generate_geo_data(self):
-        """Generate geographic data with timezone."""
+        """Generate geographic data with timezone and locality type."""
         countries = list(self.apj_countries.keys())
         weights = [self.apj_countries[c]['weight'] for c in countries]
         country = np.random.choice(countries, p=np.array(weights)/sum(weights))
@@ -154,7 +291,14 @@ class EnhancedKnownGenerator:
         city = random.choice(country_data['cities'])
         state = random.choice(country_data['states'])
         timezone = country_data['timezone']
-        return country, state, city, timezone
+        
+        # Get locality type from city mapping or random if not specified
+        if 'city_types' in country_data and city in country_data['city_types']:
+            locality_type = country_data['city_types'][city]
+        else:
+            locality_type = np.random.choice(self.locality_types, p=self.locality_weights)
+        
+        return country, state, city, timezone, locality_type
         
     def _generate_device_data(self):
         """Generate realistic device, browser, and OS data."""
@@ -244,13 +388,84 @@ class EnhancedKnownGenerator:
         dob = today - timedelta(days=age*365 + random.randint(0, 364))
         return dob.date(), age, band[2]
     
+    def _generate_income_level(self, age_band):
+        """Generate income level based on age band with realistic distribution."""
+        probabilities = self.income_probabilities[age_band]
+        income_idx = np.random.choice(len(self.income_levels), p=probabilities)
+        return self.income_levels[income_idx]
+    
+    def _generate_life_stage(self, age_band):
+        """Generate life stage based on age band with realistic distribution."""
+        probabilities = self.life_stage_probabilities[age_band]
+        life_stage_idx = np.random.choice(len(self.life_stages), p=probabilities)
+        return self.life_stages[life_stage_idx]
+    
+    def _generate_purchase_behavior(self, age_band, income_level, life_stage, locality_type):
+        """Generate comprehensive purchase behavior based on demographics."""
+        # Purchase frequency based on income level
+        freq_probs = self.purchase_freq_by_income[income_level]
+        purchase_frequency = np.random.choice(self.purchase_frequencies, p=freq_probs)
+        
+        # Purchase value based on age and income combination
+        value_key = (age_band, income_level)
+        if value_key in self.purchase_value_matrix:
+            value_probs = self.purchase_value_matrix[value_key]
+        else:
+            # Default probabilities if combination not found
+            value_probs = [0.50, 0.35, 0.15]
+        purchase_value = np.random.choice(self.purchase_values, p=value_probs)
+        
+        # Brand loyalty based on life stage
+        loyalty_probs = self.brand_loyalty_by_life_stage[life_stage]
+        brand_loyalty = np.random.choice(self.brand_loyalties, p=loyalty_probs)
+        
+        # Shopping channel based on locality
+        channel_probs = self.channel_by_locality[locality_type]
+        shopping_channel = np.random.choice(self.shopping_channels, p=channel_probs)
+        
+        return purchase_frequency, purchase_value, brand_loyalty, shopping_channel
+    
+    def _generate_behavioral_traits(self, engagement_score, income_level, age_band, life_stage):
+        """Generate behavioral traits based on existing engagement and demographic data."""
+        # Engagement behavior based on engagement score
+        if engagement_score >= 80:
+            engagement_behavior = 'active_buyer'
+        elif engagement_score >= 60:
+            engagement_behavior = 'researcher'
+        elif engagement_score >= 40:
+            engagement_behavior = 'browser'
+        else:
+            engagement_behavior = 'passive'
+        
+        # Price sensitivity based on income level and life stage
+        if income_level == 'luxury':
+            price_sensitivity = np.random.choice(self.price_sensitivities, p=[0.15, 0.35, 0.50])
+        elif income_level == 'mid_tier':
+            price_sensitivity = np.random.choice(self.price_sensitivities, p=[0.30, 0.50, 0.20])
+        else:  # budget_conscious
+            price_sensitivity = np.random.choice(self.price_sensitivities, p=[0.70, 0.25, 0.05])
+        
+        # Product interest based on age band and life stage
+        if life_stage == 'student':
+            product_interest = np.random.choice(['electronics', 'fashion', 'books_media'])
+        elif life_stage == 'young_professional':
+            product_interest = np.random.choice(['electronics', 'fashion', 'health_beauty'])
+        elif life_stage == 'parent':
+            product_interest = np.random.choice(['home_garden', 'health_beauty', 'electronics'])
+        elif life_stage == 'empty_nester':
+            product_interest = np.random.choice(['home_garden', 'health_beauty', 'sports_outdoors'])
+        else:  # retiree
+            product_interest = np.random.choice(['home_garden', 'health_beauty', 'books_media'])
+        
+        return engagement_behavior, price_sensitivity, product_interest
+    
     def generate_enhanced_dataset(self):
         """Generate the complete enhanced known customer dataset."""
         print(f"\U0001F3D7️  Generating {self.num_records} enhanced known customer records...")
         data = []
         for i in range(self.num_records):
             # Basic geo and device data
-            country, state, city, timezone = self._generate_geo_data()
+            country, state, city, timezone, locality_type = self._generate_geo_data()
             device_type, browser, os, screen_res, viewport = self._generate_device_data()
             # Customer identification
             customer_id = self._generate_customer_id()
@@ -258,12 +473,20 @@ class EnhancedKnownGenerator:
             phone_number = self._generate_phone_number(country)
             # Age and band
             dob, age, age_band = self._generate_age_and_band()
+            # Demographics based on age
+            income_level = self._generate_income_level(age_band)
+            life_stage = self._generate_life_stage(age_band)
             # Session behavior
             duration, page_views, is_bounce, avg_time_per_page, scroll_depth, click_count = self._generate_session_data()
             # Marketing attribution
             utm_source, utm_medium, utm_campaign = self._generate_utm_data()
             # Engagement metrics
             engagement_score, churn_score, conversion_propensity = self._generate_engagement_scores()
+            # Purchase behavior and behavioral traits
+            purchase_frequency, purchase_value, brand_loyalty, shopping_channel = self._generate_purchase_behavior(
+                age_band, income_level, life_stage, locality_type)
+            engagement_behavior, price_sensitivity, product_interest = self._generate_behavioral_traits(
+                engagement_score, income_level, age_band, life_stage)
             # Event data
             event_count = max(2, page_views + random.randint(1, 8))  # Known customers have more events
             last_event = fake.date_time_between(start_date='-30d', end_date='now')  # More recent activity
@@ -310,6 +533,16 @@ class EnhancedKnownGenerator:
                 'dob': str(dob),
                 'age': age,
                 'age_band': age_band,
+                'income_level': income_level,
+                'life_stage': life_stage,
+                'locality_type': locality_type,
+                'purchase_frequency': purchase_frequency,
+                'purchase_value': purchase_value,
+                'brand_loyalty': brand_loyalty,
+                'shopping_channel': shopping_channel,
+                'engagement_behavior': engagement_behavior,
+                'price_sensitivity': price_sensitivity,
+                'product_interest': product_interest,
                 'geo_country': country,
                 'geo_state': state,
                 'geo_city': city,
@@ -367,6 +600,21 @@ class EnhancedKnownGenerator:
         print(f"   Average engagement score: {df['engagement_score'].mean():.1f}")
         print(f"   Age band distribution:")
         print(df['age_band'].value_counts(normalize=True).sort_index())
+        print(f"\n💰 Income Level Distribution:")
+        print(df['income_level'].value_counts(normalize=True).sort_index())
+        print(f"\n🎯 Life Stage Distribution:")
+        print(df['life_stage'].value_counts(normalize=True).sort_index())
+        print(f"\n🏢 Locality Type Distribution:")
+        print(df['locality_type'].value_counts(normalize=True).sort_index())
+        print(f"\n🛒 Purchase Behavior Summary:")
+        print(f"   Purchase Frequency: {df['purchase_frequency'].value_counts(normalize=True).to_dict()}")
+        print(f"   Purchase Value: {df['purchase_value'].value_counts(normalize=True).to_dict()}")
+        print(f"   Brand Loyalty: {df['brand_loyalty'].value_counts(normalize=True).to_dict()}")
+        print(f"   Shopping Channel: {df['shopping_channel'].value_counts(normalize=True).to_dict()}")
+        print(f"\n🎯 Behavioral Traits:")
+        print(f"   Engagement Behavior: {df['engagement_behavior'].value_counts(normalize=True).to_dict()}")
+        print(f"   Price Sensitivity: {df['price_sensitivity'].value_counts(normalize=True).to_dict()}")
+        print(f"   Top Product Interests: {dict(df['product_interest'].value_counts(normalize=True).head(3))}")
         print(f"\n🌏 Top Countries:")
         for country, count in df['geo_country'].value_counts().head().items():
             print(f"   {country}: {count:,} ({count/len(df)*100:.1f}%)")
@@ -415,6 +663,16 @@ class EnhancedDatabricksUploader:
                 dob DATE,
                 age INT,
                 age_band STRING,
+                income_level STRING,
+                life_stage STRING,
+                locality_type STRING,
+                purchase_frequency STRING,
+                purchase_value STRING,
+                brand_loyalty STRING,
+                shopping_channel STRING,
+                engagement_behavior STRING,
+                price_sensitivity STRING,
+                product_interest STRING,
                 geo_country STRING,
                 geo_state STRING,
                 geo_city STRING,

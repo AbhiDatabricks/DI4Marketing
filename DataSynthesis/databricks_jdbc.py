@@ -34,10 +34,14 @@ class DatabricksJDBCManager:
         # Load environment variables
         load_dotenv(env_file)
         
-        self.jdbc_url = os.getenv("DATABRICKS_JDBC_URL")
         self.token = os.getenv("TOKEN")
         self.host = os.getenv("DATABRICKS_HOST", "").replace("https://", "")
         self.http_path = os.getenv("DATABRICKS_HTTP_PATH")
+        
+        # Get JDBC URL from env or construct it
+        self.jdbc_url = os.getenv("DATABRICKS_JDBC_URL")
+        if not self.jdbc_url and self.host and self.http_path and self.token:
+            self.jdbc_url = f"jdbc:databricks://{self.host}:443/default;transportMode=http;ssl=1;AuthMech=3;UID=token;PWD={self.token};httpPath={self.http_path}"
         
         # JDBC Configuration
         self.driver_class = "com.databricks.client.jdbc.Driver"
@@ -58,7 +62,7 @@ class DatabricksJDBCManager:
         driver_dir = Path.cwd() / "jdbc_drivers"
         driver_dir.mkdir(exist_ok=True)
         
-        driver_path = driver_dir / "databricks-jdbc-2.6.29.jar"
+        driver_path = driver_dir / "DatabricksJDBC42.jar"
         
         if not driver_path.exists():
             print(f"📥 JDBC driver not found. Download from:")

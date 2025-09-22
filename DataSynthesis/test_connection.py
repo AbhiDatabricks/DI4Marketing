@@ -3,7 +3,7 @@
 Test Databricks connection and apscat.di4marketing schema access
 """
 
-from DataSynthesis.databricks_jdbc import DatabricksJDBCManager
+from databricks_jdbc import DatabricksJDBCManager
 
 def test_connection_and_schema():
     """Test connection to Databricks and access to apscat.di4marketing schema."""
