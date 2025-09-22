@@ -60,7 +60,17 @@ class EnhancedKnownGenerator:
             'Thailand': ['gmail.com', 'yahoo.co.th', 'hotmail.com', 'outlook.co.th'],
             'Malaysia': ['gmail.com', 'yahoo.com.my', 'hotmail.my', 'outlook.my']
         }
-        
+        # Age band definitions and weights (skewed toward younger adults)
+        self.age_bands = [
+            (18, 24, '18-24'),
+            (25, 34, '25-34'),
+            (35, 44, '35-44'),
+            (45, 54, '45-54'),
+            (55, 64, '55-64'),
+            (65, 99, '65+')
+        ]
+        self.age_band_weights = [0.28, 0.32, 0.18, 0.12, 0.07, 0.03]  # Skewed toward 18-34
+
     def _generate_customer_id(self):
         """Generate realistic customer ID."""
         # Format: CUST_YYYYMMDD_XXXXXX (date + random)
@@ -72,11 +82,9 @@ class EnhancedKnownGenerator:
         """Generate realistic email address based on country."""
         domains = self.email_domains.get(country, ['gmail.com', 'yahoo.com', 'outlook.com'])
         domain = random.choice(domains)
-        
         # Generate realistic username
         first_name = fake.first_name().lower()
         last_name = fake.last_name().lower()
-        
         # Various email patterns
         patterns = [
             f"{first_name}.{last_name}",
@@ -86,11 +94,9 @@ class EnhancedKnownGenerator:
             f"{first_name}.{last_name[0]}",
             f"{first_name}{random.randint(1980, 2005)}"
         ]
-        
         username = random.choice(patterns)
         # Remove any non-ascii characters for email compatibility
         username = ''.join(c for c in username if ord(c) < 128)
-        
         return f"{username}@{domain}"
         
     def _generate_phone_number(self, country):
@@ -105,9 +111,7 @@ class EnhancedKnownGenerator:
             'Thailand': '+66 8{} {}',
             'Malaysia': '+60 12 {} {}'
         }
-        
         pattern = phone_patterns.get(country, '+1 555 {} {}')
-        
         if country == 'Australia':
             return pattern.format(
                 f"{random.randint(10, 99):02d}",
@@ -145,24 +149,19 @@ class EnhancedKnownGenerator:
         """Generate geographic data with timezone."""
         countries = list(self.apj_countries.keys())
         weights = [self.apj_countries[c]['weight'] for c in countries]
-        
         country = np.random.choice(countries, p=np.array(weights)/sum(weights))
         country_data = self.apj_countries[country]
-        
         city = random.choice(country_data['cities'])
         state = random.choice(country_data['states'])
         timezone = country_data['timezone']
-        
         return country, state, city, timezone
         
     def _generate_device_data(self):
         """Generate realistic device, browser, and OS data."""
         device_type = np.random.choice(['mobile', 'desktop', 'tablet'], p=[0.65, 0.25, 0.10])
         device_info = self.devices[device_type]
-        
         browser = random.choice(device_info['browsers'])
         os = random.choice(device_info['os'])
-        
         # Generate realistic specs
         if device_type == 'mobile':
             screen_resolution = random.choice(['375x667', '414x896', '360x640', '393x851', '428x926'])
@@ -173,7 +172,6 @@ class EnhancedKnownGenerator:
         else:  # tablet
             screen_resolution = random.choice(['768x1024', '1024x768', '820x1180', '810x1080'])
             viewport_size = screen_resolution
-            
         return device_type, browser, os, screen_resolution, viewport_size
         
     def _generate_session_data(self):
@@ -188,12 +186,10 @@ class EnhancedKnownGenerator:
             duration = max(45, min(duration, 4800))  # 45sec to 1.3hr
             page_views = max(2, int(np.random.poisson(4.2)))  # More page views
             is_bounce = False
-            
         # Calculate derived metrics
         avg_time_per_page = duration / page_views if page_views > 0 else duration
         scroll_depth = random.randint(35, 100) if not is_bounce else random.randint(15, 50)
         click_count = random.randint(1, 3) if is_bounce else random.randint(3, 20)
-        
         return duration, page_views, is_bounce, avg_time_per_page, scroll_depth, click_count
         
     def _generate_utm_data(self):
@@ -208,26 +204,21 @@ class EnhancedKnownGenerator:
             utm_medium = random.choice(self.utm_mediums)
             campaigns = ['customer_retention', 'loyalty_program', 'new_product_launch', 'personalized_offer', 'winback_campaign']
             utm_campaign = random.choice(campaigns)
-            
         return utm_source, utm_medium, utm_campaign
         
     def _generate_engagement_scores(self):
         """Generate realistic engagement and propensity scores (higher for known customers)."""
         # Known customers have higher engagement
         engagement_score = max(0, min(100, int(np.random.normal(65, 18))))
-        
         # Lower churn risk for known customers
         churn_score = np.random.beta(1.5, 6)  # Even more skewed towards lower churn
-        
         # Higher conversion propensity
         conversion_propensity = np.random.beta(4, 6)  # Better conversion rates
-        
         return engagement_score, round(churn_score, 3), round(conversion_propensity, 3)
         
     def _generate_event_sequence(self, page_views, click_count):
         """Generate realistic event sequence data."""
         events = []
-        
         # Known customers visit more diverse pages
         page_types = ['homepage', 'product', 'category', 'search','cart', 'checkout', 'account', 'help', 'about', 'profile', 'orders', 'wishlist']
         
@@ -236,46 +227,47 @@ class EnhancedKnownGenerator:
                 page = random.choice(['homepage', 'account', 'product'])  # Multiple entry points
             else:
                 page = random.choice(page_types)
-                
             event = {
                 'page': page,
                 'timestamp': fake.date_time_between(start_date='-1h', end_date='now').isoformat(),
                 'duration_seconds': random.randint(15, 450)
             }
             events.append(event)
-            
         return json.dumps(events)
-        
+    
+    def _generate_age_and_band(self):
+        # Choose an age band based on weights
+        band_idx = np.random.choice(len(self.age_bands), p=self.age_band_weights)
+        band = self.age_bands[band_idx]
+        age = random.randint(band[0], band[1])
+        today = datetime.today()
+        dob = today - timedelta(days=age*365 + random.randint(0, 364))
+        return dob.date(), age, band[2]
+    
     def generate_enhanced_dataset(self):
         """Generate the complete enhanced known customer dataset."""
-        print(f"🏗️  Generating {self.num_records} enhanced known customer records...")
-        
+        print(f"\U0001F3D7️  Generating {self.num_records} enhanced known customer records...")
         data = []
-        
         for i in range(self.num_records):
             # Basic geo and device data
             country, state, city, timezone = self._generate_geo_data()
             device_type, browser, os, screen_res, viewport = self._generate_device_data()
-            
             # Customer identification
             customer_id = self._generate_customer_id()
             email = self._generate_email(country)
             phone_number = self._generate_phone_number(country)
-            
+            # Age and band
+            dob, age, age_band = self._generate_age_and_band()
             # Session behavior
             duration, page_views, is_bounce, avg_time_per_page, scroll_depth, click_count = self._generate_session_data()
-            
             # Marketing attribution
             utm_source, utm_medium, utm_campaign = self._generate_utm_data()
-            
             # Engagement metrics
             engagement_score, churn_score, conversion_propensity = self._generate_engagement_scores()
-            
             # Event data
             event_count = max(2, page_views + random.randint(1, 8))  # Known customers have more events
             last_event = fake.date_time_between(start_date='-30d', end_date='now')  # More recent activity
             event_sequence = self._generate_event_sequence(page_views, click_count)
-            
             # IP address (same logic as anonymous)
             ip_ranges = {
                 'Australia': ['1.0.0', '14.0.0'],
@@ -289,7 +281,6 @@ class EnhancedKnownGenerator:
             }
             base_ip = random.choice(ip_ranges.get(country, ['192.168.0']))
             ip_address = f"{base_ip}.{random.randint(1, 254)}"
-            
             # Enhanced segment assignment for known customers
             if is_bounce and engagement_score < 30:
                 segment = 'low-engagement'
@@ -309,7 +300,6 @@ class EnhancedKnownGenerator:
                 segment = 're-engaged'
             else:
                 segment = 'returning'
-            
             record = {
                 # Core identification columns (KEY DIFFERENCE: These are populated)
                 'customer_id': customer_id,
@@ -317,6 +307,9 @@ class EnhancedKnownGenerator:
                 'anon_id': f"KNOWN_{str(uuid.uuid4()).replace('-', '')[:12].upper()}",
                 'email': email,
                 'phone_number': phone_number,
+                'dob': str(dob),
+                'age': age,
+                'age_band': age_band,
                 'geo_country': country,
                 'geo_state': state,
                 'geo_city': city,
@@ -325,7 +318,6 @@ class EnhancedKnownGenerator:
                 'event_count': event_count,
                 'last_event_date': last_event,
                 'segment': segment,
-                
                 # Enhanced columns for known customer tracking
                 'session_id': f"SESS_{str(uuid.uuid4()).replace('-', '')[:16].upper()}",
                 'session_duration_seconds': int(duration),
@@ -334,45 +326,35 @@ class EnhancedKnownGenerator:
                 'avg_time_per_page_seconds': round(avg_time_per_page, 1),
                 'scroll_depth_percent': scroll_depth,
                 'click_count': click_count,
-                
                 # Device & Tech
                 'browser_name': browser,
                 'operating_system': os,
                 'screen_resolution': screen_res,
                 'viewport_size': viewport,
                 'timezone': timezone,
-                
                 # Marketing Attribution  
                 'utm_source': utm_source,
                 'utm_medium': utm_medium,
                 'utm_campaign': utm_campaign,
-                
                 # Behavioral Analytics
                 'engagement_score': engagement_score,
                 'churn_risk_score': churn_score,
                 'conversion_propensity': conversion_propensity,
-                
                 # Event Data
                 'event_sequence_json': event_sequence,
                 'landing_page': random.choice(['homepage', 'product', 'account', 'category']),
                 'referrer_domain': utm_source if utm_source not in ['direct', 'organic'] else None,
-                
                 # Timing
                 'local_visit_hour': random.randint(7, 22),  # Known customers during business hours
                 'day_of_week': random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']),
                 'is_weekend': random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']) in ['Saturday', 'Sunday']
             }
-            
             data.append(record)
-            
             if (i + 1) % 1000 == 0:
                 print(f"   Generated {i + 1:,} known customer records...")
-        
         df = pd.DataFrame(data)
-        
         print("✅ Enhanced known customer dataset generation complete!")
         self._print_enhanced_summary(df)
-        
         return df
         
     def _print_enhanced_summary(self, df):
@@ -383,56 +365,45 @@ class EnhancedKnownGenerator:
         print(f"   Average page views: {df['page_views'].mean():.1f}")
         print(f"   Bounce rate: {df['is_bounce_session'].mean()*100:.1f}%")
         print(f"   Average engagement score: {df['engagement_score'].mean():.1f}")
-        
+        print(f"   Age band distribution:")
+        print(df['age_band'].value_counts(normalize=True).sort_index())
         print(f"\n🌏 Top Countries:")
         for country, count in df['geo_country'].value_counts().head().items():
             print(f"   {country}: {count:,} ({count/len(df)*100:.1f}%)")
-            
         print(f"\n📱 Browser Distribution:")
         for browser, count in df['browser_name'].value_counts().head().items():
             print(f"   {browser}: {count:,}")
-            
         print(f"\n🚀 Traffic Sources:")
         for source, count in df['utm_source'].value_counts().head().items():
             print(f"   {source}: {count:,}")
-            
         print(f"\n👑 Customer Segments:")
         for segment, count in df['segment'].value_counts().head().items():
             print(f"   {segment}: {count:,}")
 
 class EnhancedDatabricksUploader:
     """Upload enhanced known customer data to Databricks."""
-    
     def __init__(self):
         load_dotenv()
         self.server_hostname = "e2-demo-field-eng.cloud.databricks.com"
         self.http_path = "/sql/1.0/warehouses/862f1d757f0424f7"
         self.access_token = os.getenv("TOKEN")
-        
     def upload_enhanced_data(self, df, table_name="enhanced_known_360"):
         """Upload enhanced known customer dataset to Databricks."""
-        
         if not self.access_token:
             print("❌ TOKEN not found")
             return False
-            
         try:
             print("🔌 Connecting to Databricks...")
-            
             connection = sql.connect(
                 server_hostname=self.server_hostname,
                 http_path=self.http_path,
                 access_token=self.access_token
             )
-            
             cursor = connection.cursor()
             schema_name = "apscat.di4marketing"
             full_table_name = f"{schema_name}.{table_name}"
-            
-            print(f"🏗️  Creating enhanced known customer table {full_table_name}...")
-            
+            print(f"\U0001F3D7️  Creating enhanced known customer table {full_table_name}...")
             cursor.execute(f"DROP TABLE IF EXISTS {full_table_name}")
-            
             # Enhanced table schema (same structure as anonymous but with populated identity fields)
             create_sql = f"""
             CREATE TABLE {full_table_name} (
@@ -441,6 +412,9 @@ class EnhancedDatabricksUploader:
                 anon_id STRING,
                 email STRING,
                 phone_number STRING,
+                dob DATE,
+                age INT,
+                age_band STRING,
                 geo_country STRING,
                 geo_state STRING,
                 geo_city STRING,
@@ -449,7 +423,6 @@ class EnhancedDatabricksUploader:
                 event_count BIGINT,
                 last_event_date TIMESTAMP,
                 segment STRING,
-                
                 session_id STRING,
                 session_duration_seconds BIGINT,
                 page_views BIGINT,
@@ -457,44 +430,33 @@ class EnhancedDatabricksUploader:
                 avg_time_per_page_seconds DOUBLE,
                 scroll_depth_percent BIGINT,
                 click_count BIGINT,
-                
                 browser_name STRING,
                 operating_system STRING,
                 screen_resolution STRING,
                 viewport_size STRING,
                 timezone STRING,
-                
                 utm_source STRING,
                 utm_medium STRING,
                 utm_campaign STRING,
-                
                 engagement_score BIGINT,
                 churn_risk_score DOUBLE,
                 conversion_propensity DOUBLE,
-                
                 event_sequence_json STRING,
                 landing_page STRING,
                 referrer_domain STRING,
-                
                 local_visit_hour BIGINT,
                 day_of_week STRING,
                 is_weekend BOOLEAN
             ) USING DELTA
             """
-            
             cursor.execute(create_sql)
             print("✅ Enhanced known customer table created")
-            
-            # Upload in batches
             batch_size = 300
             total_batches = (len(df) + batch_size - 1) // batch_size
-            
-            print(f"📤 Uploading {len(df):,} enhanced known customer records in {total_batches} batches...")
-            
+            print(f"\U0001F4E4 Uploading {len(df):,} enhanced known customer records in {total_batches} batches...")
             for i, batch_start in enumerate(range(0, len(df), batch_size)):
                 batch_end = min(batch_start + batch_size, len(df))
                 batch_df = df.iloc[batch_start:batch_end]
-                
                 values_list = []
                 for _, row in batch_df.iterrows():
                     values = []
@@ -509,49 +471,40 @@ class EnhancedDatabricksUploader:
                             values.append('true' if val else 'false')
                         elif isinstance(val, pd.Timestamp):
                             values.append(f"'{val.strftime('%Y-%m-%d %H:%M:%S')}'")
+                        elif isinstance(val, (pd._libs.tslibs.nattype.NaTType, type(None))):
+                            values.append('NULL')
                         else:
                             values.append(str(val))
                     values_list.append(f"({', '.join(values)})")
-                
                 if values_list:
                     insert_sql = f"INSERT INTO {full_table_name} VALUES " + ', '.join(values_list)
                     cursor.execute(insert_sql)
                     print(f"   ✅ Batch {i+1}/{total_batches}")
-            
-            # Verify upload
             cursor.execute(f"SELECT COUNT(*) FROM {full_table_name}")
             count = cursor.fetchall()[0][0]
-            
             cursor.close()
             connection.close()
-            
             print(f"🎉 Enhanced known customer upload complete! {count:,} records in {full_table_name}")
             return True
-            
         except Exception as e:
             print(f"❌ Enhanced known customer upload failed: {e}")
             return False
 
 def main():
     """Generate and upload enhanced known customer dataset."""
-    
     # Generate enhanced known customer dataset
     generator = EnhancedKnownGenerator(num_records=90000)
     df = generator.generate_enhanced_dataset()
-    
     # Save backup
     csv_file = "../enhanced_known_customer_data.csv"
     df.to_csv(csv_file, index=False)
     print(f"💾 Enhanced known customer data saved to {csv_file}")
-    
     # Upload to Databricks
     uploader = EnhancedDatabricksUploader()
     success = uploader.upload_enhanced_data(df, "enhanced_known_360")
-    
     if success:
         print("🚀 Enhanced known customer data ready in Databricks!")
         print("   Table: apscat.di4marketing.enhanced_known_360")
-    
     return df
 
 if __name__ == "__main__":
